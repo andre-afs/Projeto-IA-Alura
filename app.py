@@ -6,7 +6,7 @@ from time import sleep
 from helpers import *
 from selecionar_persona import selecionar_persona, personas
 from selecionar_documento import selecionar_documento, selecionar_contexto, carrega
-from assistente_ecomart import criar_assistente, criar_thread
+from assistente_ecomart import criar_assistente, criar_thread, pegar_json
 
 load_dotenv()
 api_key_env = os.getenv("OPENAI_API_KEY")
@@ -14,8 +14,10 @@ api_key_env = os.getenv("OPENAI_API_KEY")
 cliente = OpenAI(api_key=api_key_env)
 modelo = "gpt-4"
 
-assistente = criar_assistente()
-thread = criar_thread()
+assistente = pegar_json()
+thread_id = assistente["thread_id"]
+assistente_id = assistente["assistente_id"]
+file_ids = assistente["file_ids"]
 
 app = Flask(__name__)
 app.secret_key = 'alura'
@@ -27,24 +29,24 @@ def bot(prompt):
     while True:
         try:
             cliente.beta.threads.messages.create(
-                thread=thread.id,
+                thread=thread_id,
                 role="user",
                 content=prompt
             )
 
             run = cliente.beta.threads.runs.create(
-                thread=thread.id,
-                assistant=assistente.id,
+                thread=thread_id,
+                assistant=assistente_id,
                 model=modelo
             )
 
             while run.status != "completed":
                 run = cliente.beta.threads.runs.retrieve(
-                    thread=thread.id,
+                    thread=thread_id,
                     run=run.id
                 )
 
-            historico = list(cliente.beta.threads.messages.list(thread=thread.id).data)
+            historico = list(cliente.beta.threads.messages.list(thread=thread_id).data)
             resposta = historico[0]
             return resposta
         except Exception as erro:
