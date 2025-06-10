@@ -5,6 +5,8 @@ from time import sleep
 from helpers import *
 from selecionar_persona import *
 import json
+from tools_ecomart import *
+
 
 load_dotenv()
 
@@ -17,50 +19,49 @@ def criar_lista_ids():
 
     file_dados = cliente.files.create(
         file=open("dados/dados_ecomart.txt", "rb"),
-        purpose="assistants",
+        purpose="assistants"
     )
     lista_ids_arquivos.append(file_dados.id)
 
     file_politicas = cliente.files.create(
-        file=open("dados/politicas_ecomart.txt", "rb"),
+        file=open("dados/políticas_ecomart.txt", "rb"),
         purpose="assistants"
     )
     lista_ids_arquivos.append(file_politicas.id)
 
     file_produtos = cliente.files.create(
-        file=open("dados/produtos_ecomart.txt", "rb"),
+        file=open("dados/produtos_ecomart.txt","rb"),
         purpose="assistants"
     )
+
     lista_ids_arquivos.append(file_produtos.id)
 
     return lista_ids_arquivos
 
 def pegar_json():
     filename = "assistentes.json"
+    
     if not os.path.exists(filename):
-        thread = criar_thread()
+        thread_id = criar_thread()
         file_id_list = criar_lista_ids()
-        assistent_id = criar_assistente()
+        assistant_id = criar_assistente(file_id_list)
         data = {
-            "thread_id": thread.id,
-            "assistente_id": assistent_id.id,
+            "assistant_id": assistant_id.id,
+            "thread_id": thread_id.id,
             "file_ids": file_id_list
         }
 
-        with open(filename, "w", encoding='utf-8') as file:
+        with open(filename, "w", encoding="utf-8") as file:
             json.dump(data, file, ensure_ascii=False, indent=4)
-        
-        print("Arquivo assistentes.json criado com sucesso!")
-
+        print("Arquivo 'assistentes.json' criado com sucesso.")
+    
     try:
-        with open(filename, "r", encoding='utf-8') as file:
+        with open(filename, "r", encoding="utf-8") as file:
             data = json.load(file)
-            thread_id = data["thread_id"]
-            assistente_id = data["assistente_id"]
-            file_ids = data["file_ids"]
-            print("Arquivo assistentes.json carregado com sucesso!")
-    except json.JSONDecodeError:
-        print("Erro ao decodificar o JSON. Verifique o formato do arquivo assistentes.json.")
+            return data
+    except FileNotFoundError:
+        print("Arquivo 'assistentes.json' não encontrado.")
+
 
 def criar_thread():
     return cliente.beta.threads.create()
@@ -69,11 +70,13 @@ def criar_assistente(file_ids=[]):
     assistente = cliente.beta.assistants.create(
         name="Atendente EcoMart",
         instructions = f"""
-            Você é um chatbot de atendimento a clientes de um e-commerce. 
-            Você não deve responder perguntas que não sejam dados do ecommerce informado!
-            Além disso, acesse os arquivos associados a você e a thread para responder as perguntas.
-            """,
+                Você é um chatbot de atendimento a clientes de um e-commerce. 
+                Você não deve responder perguntas que não sejam dados do ecommerce informado!
+                Além disso, acesse os arquivos associados a você e a thread para responder as perguntas.
+                """,
         model = modelo,
-        file_id = file_ids
+        tools= minhas_tools,
+        file_ids = file_ids
     )
     return assistente
+

@@ -46,18 +46,18 @@ def selecionar_persona(mensagem_usuario):
     """
 
     resposta = cliente.chat.completions.create(
-            model=modelo,
-            messages=[
-                    {
-                            "role": "system",
-                            "content": prompt_sistema
-                    },
-                    {
-                            "role": "user",
-                            "content" : mensagem_usuario
-                    }
-            ],
-            temperature=1,
+        model=modelo,
+        messages=[
+            {
+                "role": "system",
+                "content": prompt_sistema
+            },
+            {
+                "role": "user",
+                "content" : mensagem_usuario
+            }
+        ],
+        temperature=1,
     )
 
     return resposta.choices[0].message.content.lower()
